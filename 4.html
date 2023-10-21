@@ -4,63 +4,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    <title>Canvas Drawing Reveal Custom Image</title>
+    <title>Canvas Drawing with Custom Patterns</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 
 <body>
 
+<div id="controls">
+    <div>
+        <input type="file" id="customImage" style="display:none">
+        <button id="useCustomImage">Upload Image</button>
+    </div>
+    <div>
+        <label for="brushSize">Brush Size:</label>
+        <input type="range" id="brushSize" min="1" max="50" value="10">
+    </div>
+</div>
+<canvas id="canvas" width="800" height="500"></canvas>
+
 <script>
-    let brushSize = 10;
-    let customImage;
-    let imgLoaded = false;
-    let graphics;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let customPattern;
 
-    function setup() {
-        let canvas = createCanvas(800, 500);
-        background(255);
+    // Mouse Events
+    canvas.addEventListener('mousedown', () => { isDrawing = true; });
+    canvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+        ctx.beginPath();
+    });
+    canvas.addEventListener('mousemove', draw);
 
-        graphics = createGraphics(800, 500);
-        graphics.clear();
+    // Touch Events
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+    });
+    canvas.addEventListener('touchend', () => {
+        isDrawing = false;
+        ctx.beginPath();
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        draw(e.touches[0]);
+    });
 
-        let brushSlider = createSlider(1, 50, 10);
-        brushSlider.position(10, 10);
-        brushSlider.input(() => brushSize = brushSlider.value());
+    document.getElementById('brushSize').addEventListener('input', (event) => {
+        ctx.lineWidth = event.target.value;
+    });
 
-        let uploadButton = createFileInput(handleFile);
-        uploadButton.position(10, 60);
+    document.getElementById('useCustomImage').addEventListener('click', function() {
+        document.getElementById('customImage').click();
+    });
 
-        // Handle touch events
-        canvas.touchMoved(drawStroke);
-    }
+    document.getElementById('customImage').addEventListener('change', function() {
+        const file = this.files[0];
 
-    function draw() {
-        background(255);
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // Set the image dimensions to match the canvas
+                    img.width = canvas.width;
+                    img.height = canvas.height;
 
-        if (customImage) {
-            image(customImage, 0, 0, width, height);
+                    customPattern = ctx.createPattern(img, 'no-repeat');
+                    ctx.strokeStyle = customPattern;
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
         }
+    });
 
-        image(graphics, 0, 0);
-    }
+    function draw(event) {
+        if (!isDrawing) return;
+        let x = event.clientX ? event.clientX - canvas.offsetLeft : event.pageX - canvas.offsetLeft;
+        let y = event.clientY ? event.clientY - canvas.offsetTop : event.pageY - canvas.offsetTop;
 
-    function drawStroke() {
-        graphics.strokeWeight(brushSize);
-        graphics.stroke(255); // White stroke to simulate erasing
-        graphics.line(mouseX, mouseY, pmouseX, pmouseY); // Draw line between previous and current mouse positions
-
-        // Prevent default touch behavior
-        return false;
-    }
-
-    function handleFile(file) {
-        if (file.type === 'image') {
-            customImage = loadImage(file.data, () => {
-                imgLoaded = true;
-            });
-        } else {
-            alert('Please upload an image file!');
-        }
+        ctx.lineCap = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
     }
 </script>
 
