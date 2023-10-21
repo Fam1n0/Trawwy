@@ -3,79 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canvas Drawing with Patterns</title>
-    <style>
-        canvas {
-            border: 1px solid black;
-            cursor: crosshair;
-        }
-        #controls {
-            display: flex;
-            justify-content: space-between;
-            width: 400px;
-            margin-bottom: 10px;
-        }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <title>Triwwy</title>
 </head>
 <body>
 
-<div id="controls">
-    <div>
-        <label for="patternStyle">Pattern Style:</label>
-        <select id="patternStyle">
-            <option value="none">None</option>
-            <option value="image1">Image 1</option>
-            <option value="image2">Image 2</option>
-        </select>
-    </div>
-    <div>
-        <label for="brushSize">Brush Size:</label>
-        <input type="range" id="brushSize" min="1" max="50" value="10">
-    </div>
-</div>
-<canvas id="canvas" width="800" height="500"></canvas>
-
-<!-- Images for patterns -->
-<img src="path_to_your_first_image.jpg" id="image1" style="display:none">
-<img src="path_to_your_second_image.jpg" id="image2" style="display:none">
-
 <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
+    let brushSize = 10;
+    let currentPattern;
 
-    canvas.addEventListener('mousedown', () => { isDrawing = true; });
-    canvas.addEventListener('mouseup', () => {
-        isDrawing = false;
-        ctx.beginPath();
-    });
-    
-    canvas.addEventListener('mousemove', draw);
-    document.getElementById('brushSize').addEventListener('input', (event) => {
-        ctx.lineWidth = event.target.value;
-    });
+    function setup() {
+        createCanvas(800, 500);
+        background(255); // Set canvas background to white
 
-    document.getElementById('patternStyle').addEventListener('change', () => {
-        const patternChoice = document.getElementById('patternStyle').value;
+        let patternSelector = createSelect();
+        patternSelector.option('None');
+        patternSelector.option('Pattern 1');
+        patternSelector.option('Pattern 2');
+        patternSelector.changed(() => {
+            let val = patternSelector.value();
+            if (val === 'Pattern 1') {
+                currentPattern = loadImage('path_to_your_first_image.jpg');
+            } else if (val === 'Pattern 2') {
+                currentPattern = loadImage('path_to_your_second_image.jpg');
+            } else {
+                currentPattern = null;
+            }
+        });
 
-        if (patternChoice === "none") {
-            ctx.strokeStyle = 'black';
-        } else {
-            const img = document.getElementById(patternChoice);
-            const pattern = ctx.createPattern(img, 'repeat');
-            ctx.strokeStyle = pattern;
-        }
-    });
-
-    function draw(event) {
-        if (!isDrawing) return;
-        ctx.lineCap = 'round';
-        ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+        let brushSlider = createSlider(1, 50, 10);
+        brushSlider.input(() => brushSize = brushSlider.value());
     }
 
+    function draw() {
+        if (mouseIsPressed) {
+            if (currentPattern) {
+                fill(currentPattern);
+            } else {
+                fill(0); // Black color
+            }
+            ellipse(mouseX, mouseY, brushSize);
+        }
+    }
 </script>
 
 </body>
