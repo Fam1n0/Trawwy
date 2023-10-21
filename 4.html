@@ -14,14 +14,14 @@
     let brushSize = 10;
     let customImage;
     let imgLoaded = false;
-    let graphics; // Off-screen graphics buffer for drawings
+    let graphics;
 
     function setup() {
-        createCanvas(800, 500);
-        background(255); // Set canvas background to white
+        let canvas = createCanvas(800, 500);
+        background(255);
 
-        graphics = createGraphics(800, 500); // Initialize the graphics buffer
-        graphics.clear(); // Make sure it's transparent at the start
+        graphics = createGraphics(800, 500);
+        graphics.clear();
 
         let brushSlider = createSlider(1, 50, 10);
         brushSlider.position(10, 10);
@@ -29,6 +29,9 @@
 
         let uploadButton = createFileInput(handleFile);
         uploadButton.position(10, 60);
+
+        // Handle touch events
+        canvas.touchMoved(drawStroke);
     }
 
     function draw() {
@@ -38,11 +41,16 @@
             image(customImage, 0, 0, width, height);
         }
 
-        image(graphics, 0, 0); // Draw the graphics buffer over the main canvas
+        image(graphics, 0, 0);
+    }
 
-        if (mouseIsPressed) {
-            clearCircle(mouseX, mouseY, brushSize);
-        }
+    function drawStroke() {
+        graphics.strokeWeight(brushSize);
+        graphics.stroke(255); // White stroke to simulate erasing
+        graphics.line(mouseX, mouseY, pmouseX, pmouseY); // Draw line between previous and current mouse positions
+
+        // Prevent default touch behavior
+        return false;
     }
 
     function handleFile(file) {
@@ -53,13 +61,6 @@
         } else {
             alert('Please upload an image file!');
         }
-    }
-
-    function clearCircle(x, y, radius) {
-        // This function will clear a circle (like an eraser) on the graphics buffer
-        graphics.blendMode(DST_OUT);
-        graphics.ellipse(x, y, radius);
-        graphics.blendMode(BLEND);
     }
 </script>
 
