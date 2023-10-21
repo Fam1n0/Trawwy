@@ -1,49 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    <title>Triwwy</title>
+    <title>Trawpy Drapp</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
 </head>
+
 <body>
 
+<div id="controls">
+    <div>
+        <label for="patternStyle">Pattern Style:</label>
+        <select id="patternStyle">
+            <option value="none">None</option>
+            <option value="image1">Image 1</option>
+            <option value="image2">Image 2</option>
+            <option value="custom">Custom</option>
+        </select>
+    </div>
+    <div>
+        <label for="brushSize">Brush Size:</label>
+        <input type="range" id="brushSize" min="1" max="50" value="10">
+    </div>
+    <div>
+        <label for="customImage">Upload Image:</label>
+        <input type="file" id="customImage" accept="image/*">
+        <button id="useCustomImage">Use Uploaded Image</button>
+    </div>
+</div>
+<canvas id="canvas" width="800" height="500"></canvas>
+
+<!-- Images for patterns -->
+<img src="path_to_your_first_image.jpg" id="image1" style="display:none">
+<img src="path_to_your_second_image.jpg" id="image2" style="display:none">
+
 <script>
-    let brushSize = 10;
-    let currentPattern;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let customPattern = null;
 
-    function setup() {
-        createCanvas(800, 500);
-        background(255); // Set canvas background to white
+    // Mouse Events
+    canvas.addEventListener('mousedown', () => { isDrawing = true; });
+    canvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+        ctx.beginPath();
+    });
+    canvas.addEventListener('mousemove', draw);
 
-        let patternSelector = createSelect();
-        patternSelector.option('None');
-        patternSelector.option('Pattern 1');
-        patternSelector.option('Pattern 2');
-        patternSelector.changed(() => {
-            let val = patternSelector.value();
-            if (val === 'Pattern 1') {
-                currentPattern = loadImage('path_to_your_first_image.jpg');
-            } else if (val === 'Pattern 2') {
-                currentPattern = loadImage('path_to_your_second_image.jpg');
-            } else {
-                currentPattern = null;
+    // Touch Events
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+    });
+    canvas.addEventListener('touchend', () => {
+        isDrawing = false;
+        ctx.beginPath();
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        draw(e.touches[0]);
+    });
+
+    document.getElementById('brushSize').addEventListener('input', (event) => {
+        ctx.lineWidth = event.target.value;
+    });
+
+    document.getElementById('useCustomImage').addEventListener('click', function() {
+        const fileInput = document.getElementById('customImage');
+        const file = fileInput.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    customPattern = ctx.createPattern(img, 'repeat');
+                }
+                img.src = event.target.result;
             }
-        });
-
-        let brushSlider = createSlider(1, 50, 10);
-        brushSlider.input(() => brushSize = brushSlider.value());
-    }
-
-    function draw() {
-        if (mouseIsPressed) {
-            if (currentPattern) {
-                fill(currentPattern);
-            } else {
-                fill(0); // Black color
-            }
-            ellipse(mouseX, mouseY, brushSize);
+            reader.readAsDataURL(file);
         }
+    });
+
+    document.getElementById('patternStyle').addEventListener('change', function() {
+        const patternChoice = document.getElementById('patternStyle').value;
+
+        if (patternChoice === "none") {
+            ctx.strokeStyle = 'black';
+        } else if (patternChoice === "custom") {
+            ctx.strokeStyle = customPattern;
+        } else {
+            const img = document.getElementById(patternChoice);
+            const pattern = ctx.createPattern(img, 'repeat');
+            ctx.strokeStyle = pattern;
+        }
+    });
+
+    function draw(event) {
+        if (!isDrawing) return;
+        let x = event.clientX ? event.clientX - canvas.offsetLeft : event.pageX - canvas.offsetLeft;
+        let y = event.clientY ? event.clientY - canvas.offsetTop : event.pageY - canvas.offsetTop;
+
+        ctx.lineCap = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
     }
 </script>
 
