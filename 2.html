@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Drawing with Patterns</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="controls">
+    <div>
+        <label for="patternStyle">Pattern Style:</label>
+        <select id="patternStyle">
+            <option value="none">None</option>
+            <option value="image1">Image 1</option>
+            <option value="image2">Image 2</option>
+        </select>
+    </div>
+    <div>
+        <label for="brushSize">Brush Size:</label>
+        <input type="range" id="brushSize" min="1" max="50" value="10">
+    </div>
+</div>
+<canvas id="canvas" width="800" height="500"></canvas>
+
+<!-- Images for patterns -->
+<img src="path_to_your_first_image.jpg" id="image1" style="display:none">
+<img src="path_to_your_second_image.jpg" id="image2" style="display:none">
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+
+    // Mouse Events
+    canvas.addEventListener('mousedown', () => { isDrawing = true; });
+    canvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+        ctx.beginPath();
+    });
+    canvas.addEventListener('mousemove', draw);
+
+    // Touch Events
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+    });
+    canvas.addEventListener('touchend', () => {
+        isDrawing = false;
+        ctx.beginPath();
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        draw(e.touches[0]);
+    });
+
+    document.getElementById('brushSize').addEventListener('input', (event) => {
+        ctx.lineWidth = event.target.value;
+    });
+
+    document.getElementById('patternStyle').addEventListener('change', () => {
+        const patternChoice = document.getElementById('patternStyle').value;
+
+        if (patternChoice === "none") {
+            ctx.strokeStyle = 'black';
+        } else {
+            const img = document.getElementById(patternChoice);
+            const pattern = ctx.createPattern(img, 'repeat');
+            ctx.strokeStyle = pattern;
+        }
+    });
+
+    function draw(event) {
+        if (!isDrawing) return;
+        let x = event.clientX ? event.clientX - canvas.offsetLeft : event.pageX - canvas.offsetLeft;
+        let y = event.clientY ? event.clientY - canvas.offsetTop : event.pageY - canvas.offsetTop;
+
+        ctx.lineCap = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+</script>
+
+</body>
+</html>
