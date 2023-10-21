@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <title>Canvas Drawing Reveal Custom Image</title>
+</head>
+
+<body>
+
+<script>
+    let brushSize = 10;
+    let customImage;
+    let imgLoaded = false;
+    let graphics; // Off-screen graphics buffer for drawings
+
+    function setup() {
+        createCanvas(800, 500);
+        background(255); // Set canvas background to white
+
+        graphics = createGraphics(800, 500); // Initialize the graphics buffer
+        graphics.clear(); // Make sure it's transparent at the start
+
+        let brushSlider = createSlider(1, 50, 10);
+        brushSlider.position(10, 10);
+        brushSlider.input(() => brushSize = brushSlider.value());
+
+        let uploadButton = createFileInput(handleFile);
+        uploadButton.position(10, 60);
+    }
+
+    function draw() {
+        background(255);
+
+        if (customImage) {
+            image(customImage, 0, 0, width, height);
+        }
+
+        image(graphics, 0, 0); // Draw the graphics buffer over the main canvas
+
+        if (mouseIsPressed) {
+            clearCircle(mouseX, mouseY, brushSize);
+        }
+    }
+
+    function handleFile(file) {
+        if (file.type === 'image') {
+            customImage = loadImage(file.data, () => {
+                imgLoaded = true;
+            });
+        } else {
+            alert('Please upload an image file!');
+        }
+    }
+
+    function clearCircle(x, y, radius) {
+        // This function will clear a circle (like an eraser) on the graphics buffer
+        graphics.blendMode(DST_OUT);
+        graphics.ellipse(x, y, radius);
+        graphics.blendMode(BLEND);
+    }
+</script>
+
+</body>
+</html>
